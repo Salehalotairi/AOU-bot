@@ -1,23 +1,21 @@
 import os
 import openai
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
 # إعداد مفاتيح API
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-# إعداد OpenAI API
 openai.api_key = OPENAI_API_KEY
 
 # رسالة البداية
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text(
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
         "مرحبًا بك في بوت الجامعة العربية المفتوحة! استطيع الإجابة عن أي استفسار يخص الجامعة."
     )
 
 # معالجة الرسائل
-def handle_message(update: Update, context: CallbackContext):
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
 
     # إرسال الرسالة إلى GPTs API
@@ -33,20 +31,18 @@ def handle_message(update: Update, context: CallbackContext):
         bot_reply = "عذرًا، حدث خطأ أثناء معالجة طلبك. يرجى المحاولة لاحقًا."
 
     # الرد على المستخدم
-    update.message.reply_text(bot_reply)
+    await update.message.reply_text(bot_reply)
 
 # الإعداد الرئيسي للبوت
 def main():
-    updater = Updater(TELEGRAM_BOT_TOKEN)
-    dp = updater.dispatcher
+    application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
     # إضافة الأوامر والمعالجات
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     # بدء البوت
-    updater.start_polling()
-    updater.idle()
+    application.run_polling()
 
 if __name__ == "__main__":
     main()
